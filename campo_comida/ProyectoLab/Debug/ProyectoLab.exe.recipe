@@ -2,7 +2,11 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
+<<<<<<< HEAD
       <FullPath>C:\Users\Fer\Desktop\ProyetcoTeoCGIHC\campo_comida\Debug\ProyectoLab.exe</FullPath>
+=======
+      <FullPath>C:\Users\Erik\Desktop\ProyectoCG\ProyetcoTeoCGIHC\campo_comida\Debug\ProyectoLab.exe</FullPath>
+>>>>>>> dca4a4566f57000f1e16e0f30513f993c404f99b
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles />
