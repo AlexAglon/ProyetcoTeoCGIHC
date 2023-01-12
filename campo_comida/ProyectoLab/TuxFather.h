@@ -30,6 +30,7 @@ private:
 	float right_foot_ang;
 
 	bool larm_d, rfoot_d;
+	bool moveHandsAndFeet;
 
 	//void update();
 
@@ -42,10 +43,15 @@ public:
 		std::string left_foot_model,
 		std::string right_foot_model
 	);
+	TuxFather_M();
 
 	glm::vec3 getPos() { return pos; };
 
 	void walkAnimation();
+	void typingAnimation();
+	void moveTypingHands();
+
+	void shouldMoveHandsAndFeet(bool state);
 
 	void setPos(glm::vec3 newPos);
 	void move(GLuint& uniformModel, glm::vec3 newPos, float rotAngle);

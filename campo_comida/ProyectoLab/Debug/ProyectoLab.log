@@ -8,9 +8,10 @@ C:\Users\Erik\Desktop\ProyectoCG\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\addon
 C:\Users\Erik\Desktop\ProyectoCG\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\addons.h(15,13): warning C4244: 'return': conversión de 'double' a 'float'; posible pérdida de datos
 C:\Users\Erik\Desktop\ProyectoCG\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\Window.h(12,36): warning C4244: 'return': conversión de 'GLint' a 'GLfloat'; posible pérdida de datos
 C:\Users\Erik\Desktop\ProyectoCG\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\Window.h(13,37): warning C4244: 'return': conversión de 'GLint' a 'GLfloat'; posible pérdida de datos
-C:\Users\Erik\Desktop\ProyectoCG\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\main.cpp(418,13): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
-C:\Users\Erik\Desktop\ProyectoCG\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\main.cpp(440,13): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
-C:\Users\Erik\Desktop\ProyectoCG\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\main.cpp(919,15): warning C4244: 'inicializando': conversión de 'double' a 'GLfloat'; posible pérdida de datos
-C:\Users\Erik\Desktop\ProyectoCG\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\main.cpp(921,33): warning C4244: '+=': conversión de 'double' a 'GLfloat'; posible pérdida de datos
-C:\Users\Erik\Desktop\ProyectoCG\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\main.cpp(1638,20): warning C4305: '+=': truncamiento de 'double' a 'float'
+C:\Users\Erik\Desktop\ProyectoCG\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\main.cpp(424,13): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
+C:\Users\Erik\Desktop\ProyectoCG\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\main.cpp(446,13): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
+C:\Users\Erik\Desktop\ProyectoCG\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\main.cpp(926,15): warning C4244: 'inicializando': conversión de 'double' a 'GLfloat'; posible pérdida de datos
+C:\Users\Erik\Desktop\ProyectoCG\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\main.cpp(928,33): warning C4244: '+=': conversión de 'double' a 'GLfloat'; posible pérdida de datos
+C:\Users\Erik\Desktop\ProyectoCG\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\main.cpp(1670,20): warning C4305: '+=': truncamiento de 'double' a 'float'
+LINK : warning LNK4098: la biblioteca predeterminada'MSVCRT' entra en conflicto con otras bibliotecas; use la biblioteca /NODEFAULTLIB:biblioteca
   ProyectoLab.vcxproj -> C:\Users\Erik\Desktop\ProyectoCG\ProyetcoTeoCGIHC\campo_comida\Debug\ProyectoLab.exe

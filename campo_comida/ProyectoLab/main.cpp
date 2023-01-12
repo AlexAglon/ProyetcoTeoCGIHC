@@ -63,6 +63,11 @@ float toffsetv = 0.0f;
 float reproduciranimacion, habilitaranimacion,guardoFrame, reinicioFrame, ciclo, ciclo2, contador = 0;
 float reproduciranimaciontux, habilitaranimaciontux;
 
+// TUX
+bool playTypingAnimation = false;
+bool tuxMoveYouHandsAndFeet = false;
+bool turnPcOn = false;
+
 Window mainWindow;
 Camera camera;
 
@@ -294,20 +299,16 @@ void tuxAnimate(void)
 				printf("termina anim\n");
 				tuxPlayIndex = 0;
 				tuxPlay = false;
+				playTypingAnimation = true;
 			}
 			else //Next frame interpolations
 			{
-				//printf("entro aquí\n");
-				i_curr_steps_tux = 0; //Reset counter
-				//Interpolation
+				i_curr_steps_tux = 0;
 				tuxInterpolation();
 			}
 		}
 		else
 		{
-			//printf("se quedó aqui\n");
-			//printf("max steps: %f", i_max_steps);
-			//Draw animation
 			tuxFatherMov.x += TuxKeyFrame[tuxPlayIndex].movTux_xInc;
 			tuxFatherMov.z += TuxKeyFrame[tuxPlayIndex].movTux_zInc;
 			giroTuxFather += TuxKeyFrame[tuxPlayIndex].giroTuxInc;
@@ -448,7 +449,6 @@ void checkForLightThreeshold(SpotLight lights[], glm::vec3 COLORS[], std::chrono
 
 	start = std::chrono::high_resolution_clock::now();
 }
-
 
 int main()
 {
@@ -783,7 +783,7 @@ int main()
 
 	start_time = std::chrono::high_resolution_clock::now();
 	//******************************************FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF******************************************/
-	glm::vec3 posblackhawk = glm::vec3(2.0f, 0.0f, 0.0f);  //VARIABLE MAT PARA DECLARA DATOS DE X,Y,Z INICILES PARA EL AVION 
+	glm::vec3 posPuestoTamales = glm::vec3(2.0f, 0.0f, 0.0f);  //VARIABLE MAT PARA DECLARA DATOS DE X,Y,Z INICILES PARA EL AVION 
 	//KEYFRAMES DECLARADOS INICIALES
 
 	// TUX KeyFrames
@@ -909,9 +909,11 @@ int main()
 	bool is_day = true;
 	bool animateStage = false;
 
+	int countTypingFrames = 0;
+	bool playReturnToOriginAnimation = false;
+
 	// Stage Lights
 	glm::vec3 l1, l2, l3;
-
 
 	//Loop mientras no se cierra la ventana
 	while (!mainWindow.getShouldClose())
@@ -1048,8 +1050,29 @@ int main()
 		// para keyframes
 		inputKeyframes(mainWindow.getsKeys());
 		inputTuxKeyframes(mainWindow.getsKeys());
+		tuxFather.shouldMoveHandsAndFeet(tuxMoveYouHandsAndFeet);
 		animate();
 		tuxAnimate();
+
+		if (playTypingAnimation) {
+			if (countTypingFrames++ == 0) {
+				tuxMoveYouHandsAndFeet = false;
+			} else if (countTypingFrames++ <= 900) {
+				//std::cout << "Now we moving hands as typing " << countTypingFrames << "\n";
+				
+				// FIXME: TUX hands gone crazy :(
+				//tuxFather.typingAnimation();
+				turnPcOn = true;
+			}
+			else if (countTypingFrames == 901) {
+				// end animation, trigger the new animation
+				playTypingAnimation = false;
+				countTypingFrames = 0;
+				tuxFather.shouldMoveHandsAndFeet(true);
+				std::cout << "\nNow go back tou you place, tux...\n";
+				playReturnToOriginAnimation = true;
+			}
+		}
 
 
 		// Clear the window
@@ -1531,8 +1554,8 @@ int main()
 		botes.RenderModel();
 
 		model = glm::mat4(1.0);
-		posblackhawk = glm::vec3(posXtamales + movtamales_x, posYtamales , posZtamales + movtamales_z); //POS INICIAL+VALOR DE LA ANIMACION
-		model = glm::translate(model, posblackhawk);
+		posPuestoTamales = glm::vec3(posXtamales + movtamales_x, posYtamales , posZtamales + movtamales_z); //POS INICIAL+VALOR DE LA ANIMACION
+		model = glm::translate(model, posPuestoTamales);
 		model = glm::scale(model, glm::vec3(6.0f, 10.0f, 8.0f));
 		model = glm::rotate(model, giroTamales * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
 		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
@@ -1607,8 +1630,12 @@ int main()
 		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		Desk_M.RenderModel();
-		MonitorOff_M.RenderModel();
-		// MonitoOn_M.RenderModel();
+		if (turnPcOn) {
+			MonitoOn_M.RenderModel();
+		}
+		else {
+			MonitorOff_M.RenderModel();
+		}
 		tuxFather.move(uniformModel, tuxFatherMov, giroTuxFather);
 		
 
@@ -1673,6 +1700,14 @@ int main()
 }
 
 void inputTuxKeyframes(bool* keys) {
+	/*
+	Handle the tux animation init and restart
+
+	- Walk from origin to front desk
+	- Move hands pressing the keyboard
+	- return to origin
+
+	*/
 	if (keys[GLFW_KEY_SPACE] && keys[GLFW_KEY_2]) // init animation
 	{
 		if (reproduciranimaciontux < 1)
@@ -1682,16 +1717,18 @@ void inputTuxKeyframes(bool* keys) {
 				tuxResetElements();
 				//First Interpolation				
 				tuxInterpolation();
+				tuxMoveYouHandsAndFeet = true;
 				tuxPlay = true;
 				tuxPlayIndex = 0;
 				i_curr_steps_tux = 0;
 				reproduciranimaciontux++;
-				printf("\n presiona 0 para habilitar reproducir de nuevo la animación'\n");
+				printf("\nPresiona 0 + 2  para habilitar la reproducción de la animación de TUX.'\n");
 				habilitaranimaciontux = 0;
 
 			}
 			else
 			{
+				
 				tuxPlay = false;
 			}
 		}
@@ -1701,7 +1738,10 @@ void inputTuxKeyframes(bool* keys) {
 		if (habilitaranimaciontux < 1)
 		{
 			reproduciranimaciontux = 0;
+			turnPcOn = false;
 		}
+
+		// TODO: init Move tux hands as if it were typing
 	}
 }
 
