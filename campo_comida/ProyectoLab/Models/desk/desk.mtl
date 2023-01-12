@@ -1,0 +1,58 @@
+# 3ds Max Wavefront OBJ Exporter v0.99 - (c)2007 guruware
+# File Created: 11.01.2023 21:25:31
+
+newmtl Material__108
+	Ns 10.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.5880 0.5880 0.5880
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka C:\Users\Erik\Desktop\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\Textures\Oak.jpg
+	map_Kd C:\Users\Erik\Desktop\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\Textures\Oak.jpg
+
+newmtl Material__110
+	Ns 10.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.5880 0.5880 0.5880
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka C:\Users\Erik\Desktop\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\Textures\silver_metal_texture.jpg
+	map_Kd C:\Users\Erik\Desktop\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\Textures\silver_metal_texture.jpg
+
+newmtl Material__109
+	Ns 10.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.5880 0.5880 0.5880
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka C:\Users\Erik\Desktop\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\Textures\Ocra_blk.png
+	map_Kd C:\Users\Erik\Desktop\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\Textures\Ocra_blk.png
+
+newmtl Material__113
+	Ns 10.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.5880 0.5880 0.5880
+	Kd 0.5880 0.5880 0.5880
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka C:\Users\Erik\Desktop\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\Textures\monitor detail.png
+	map_Kd C:\Users\Erik\Desktop\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\Textures\monitor detail.png

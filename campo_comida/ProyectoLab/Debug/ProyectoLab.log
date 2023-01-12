@@ -8,9 +8,9 @@ C:\Users\Fer\Desktop\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\addons.h(10,22): 
 C:\Users\Fer\Desktop\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\addons.h(15,13): warning C4244: 'return': conversión de 'double' a 'float'; posible pérdida de datos
 C:\Users\Fer\Desktop\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\Window.h(12,36): warning C4244: 'return': conversión de 'GLint' a 'GLfloat'; posible pérdida de datos
 C:\Users\Fer\Desktop\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\Window.h(13,37): warning C4244: 'return': conversión de 'GLint' a 'GLfloat'; posible pérdida de datos
-C:\Users\Fer\Desktop\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\main.cpp(344,13): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
-C:\Users\Fer\Desktop\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\main.cpp(366,13): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
-C:\Users\Fer\Desktop\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\main.cpp(781,15): warning C4244: 'inicializando': conversión de 'double' a 'GLfloat'; posible pérdida de datos
-C:\Users\Fer\Desktop\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\main.cpp(783,33): warning C4244: '+=': conversión de 'double' a 'GLfloat'; posible pérdida de datos
-C:\Users\Fer\Desktop\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\main.cpp(1540,20): warning C4305: '+=': truncamiento de 'double' a 'float'
+C:\Users\Fer\Desktop\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\main.cpp(534,13): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
+C:\Users\Fer\Desktop\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\main.cpp(556,13): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
+C:\Users\Fer\Desktop\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\main.cpp(1118,15): warning C4244: 'inicializando': conversión de 'double' a 'GLfloat'; posible pérdida de datos
+C:\Users\Fer\Desktop\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\main.cpp(1120,33): warning C4244: '+=': conversión de 'double' a 'GLfloat'; posible pérdida de datos
+C:\Users\Fer\Desktop\ProyetcoTeoCGIHC\campo_comida\ProyectoLab\main.cpp(1927,20): warning C4305: '+=': truncamiento de 'double' a 'float'
   ProyectoLab.vcxproj -> C:\Users\Fer\Desktop\ProyetcoTeoCGIHC\campo_comida\Debug\ProyectoLab.exe
