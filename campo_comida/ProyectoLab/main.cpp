@@ -62,6 +62,7 @@ float toffsetv = 0.0f;
 //float reproduciranimacion, habilitaranimacion, guardoFrame, reinicioFrame, ciclo, ciclo2, contador = 0;
 float reproduciranimacion, habilitaranimacion,guardoFrame, reinicioFrame, ciclo, ciclo2, contador = 0;
 float reproduciranimaciontux, habilitaranimaciontux;
+float reproduciranimacionHollow, habilitaranimacionHollow;
 
 Window mainWindow;
 Camera camera;
@@ -109,7 +110,12 @@ Model Phineas;
 Model BrazoD;
 Model BrazoI;
 Model Calle;
-/////////////////////////////////////////////////////////////////////////////////////////////////7
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+//---------------------------Modelo para animaion de keyframe hollow K 
+Model Hollow_K;
+Model Energia;
+
 //food trucks :
 Model ItalianTruck;
 Model AssiaticTruck;
@@ -167,6 +173,9 @@ static const char* fShader = "shaders/shader_light.frag";
 //PARA INPUT CON KEYFRAMES 
 void inputKeyframes(bool* keys);
 void inputTuxKeyframes(bool* keys);
+
+//PARA INPUT CON KEYFRAMES hollow
+void inputhollowKeyframes(bool* keys);
 
 void CreateObjects()
 {
@@ -232,12 +241,17 @@ void CreateShaders()
 ///////////////////////////////KEYFRAMES/////////////////////
 #define MAX_FRAMES 30
 // Tux KeyFrames
-bool animacionTux = false;
 glm::vec3 tuxFatherPos = glm::vec3(-415.0f, 1.0f, 80.0f);
 glm::vec3 tuxFatherMov = tuxFatherPos;
 float giroTuxFather = 180.0f;
 int i_max_steps_tux = 90;
 int i_curr_steps_tux = 0;
+
+//para animaciones hollow
+
+int i_max_steps_hollow = 90;
+int i_curr_steps_hollow = 14;
+
 typedef struct _tuxframe
 {
 	//Variables para GUARDAR Key Frames
@@ -253,6 +267,28 @@ TUX_FRAME TuxKeyFrame[MAX_FRAMES];
 int TuxFrameIndex = 4;			//introducir datos
 bool tuxPlay = false;
 int tuxPlayIndex = 0;
+
+
+//-----------------Animacion de energia de Hollow--------------------------------------------
+float posEnergy = 0.0;//Posicion inicial
+float movEnergy = 0.0f;//para movimiento
+float energySize = 0.0;
+
+//------------------------------------------Para hollow
+typedef struct _hollowframe
+{
+	float energiat;
+	float energyMov;
+
+	float energiaT;
+	float energyINC;
+} HOLLOW_FRAME;
+
+HOLLOW_FRAME HOLLOWKeyFrame[MAX_FRAMES];
+int hollowFrameIndex = 11;			//introducir datos
+bool hollowPlay = false;
+int hollowPlayIndex = 0;
+
 
 void saveTuxFrame(void)
 {
@@ -317,12 +353,75 @@ void tuxAnimate(void)
 	}
 }
 
+//Para hollow
+void saveHollowFrame(void)
+{
+
+	printf("frameindex %d\n", hollowFrameIndex);
+	HOLLOWKeyFrame[hollowFrameIndex].energiat = energySize;//crecimiento
+	HOLLOWKeyFrame[hollowFrameIndex].energyMov = movEnergy;//movimiento
+
+	hollowFrameIndex++;
+}
+
+void hollowResetElements(void)
+{
+	energySize = HOLLOWKeyFrame[0].energiat;//crecimiento
+	movEnergy = HOLLOWKeyFrame[0].energyMov;//MOvimiento
+}
+
+void hollowInterpolation(void)
+{
+	HOLLOWKeyFrame[hollowPlayIndex].energiaT = (HOLLOWKeyFrame[hollowPlayIndex + 1].energiat - HOLLOWKeyFrame[hollowPlayIndex].energiat) / i_max_steps_hollow;//crecimiento
+	HOLLOWKeyFrame[hollowPlayIndex].energyINC = (HOLLOWKeyFrame[hollowPlayIndex + 1].energyMov - HOLLOWKeyFrame[hollowPlayIndex].energyMov) / i_max_steps_hollow;
+}
+
+void hollowAnimate(void)
+{
+	//Movimiento del objeto
+	if (hollowPlay)
+	{
+		if (i_curr_steps_hollow >= i_max_steps_hollow) //end of animation between frames?
+		{
+			hollowPlayIndex++;
+			printf("playindex : %d\n", hollowPlayIndex);
+			if (hollowPlayIndex > hollowFrameIndex - 2)	//end of total animation?
+			{
+				printf("Frame index= %d\n", hollowFrameIndex);
+				printf("termina anim\n");
+				hollowPlayIndex = 0;
+				hollowPlay = false;
+			}
+			else //Next frame interpolations
+			{
+				//printf("entro aquí\n");
+				i_curr_steps_hollow = 0; //Reset counter
+				//Interpolation
+				hollowInterpolation();
+			}
+		}
+		else
+		{
+			//printf("se quedó aqui\n");
+			//printf("max steps: %f", i_max_steps);
+			//Draw animation
+
+			energySize += HOLLOWKeyFrame[hollowPlayIndex].energiaT;
+			movEnergy += HOLLOWKeyFrame[hollowPlayIndex].energyINC;
+
+			i_curr_steps_hollow++;
+		}
+
+	}
+}
+
 
 // Puesto KeyFrames
 bool animacion = false;
 float posXtamales = 100.0, posYtamales = 0.0, posZtamales = -350.0;
 float movtamales_x = 0.0f, movtamales_z = 0.0f;
 float giroTamales = 0;
+
 
 int i_max_steps = 90;
 int i_curr_steps = 14;
@@ -335,6 +434,7 @@ typedef struct _frame
 	float movTamales_zInc;		//Variable para IncrementoY
 	float giroTamales;
 	float giroTamalesInc;
+
 }FRAME;
 
 FRAME KeyFrame[MAX_FRAMES];
@@ -356,10 +456,10 @@ void saveFrame(void)
 
 void resetElements(void)
 {
-
 	movtamales_x = KeyFrame[0].movTamales_x;
 	movtamales_z = KeyFrame[0].movTamales_z;
 	giroTamales = KeyFrame[0].giroTamales;
+	
 }
 
 void interpolation(void)
@@ -367,6 +467,7 @@ void interpolation(void)
 	KeyFrame[playIndex].movTamales_xInc = (KeyFrame[playIndex + 1].movTamales_x - KeyFrame[playIndex].movTamales_x) / i_max_steps;
 	KeyFrame[playIndex].movTamales_zInc = (KeyFrame[playIndex + 1].movTamales_z - KeyFrame[playIndex].movTamales_z) / i_max_steps;
 	KeyFrame[playIndex].giroTamalesInc = (KeyFrame[playIndex + 1].giroTamales - KeyFrame[playIndex].giroTamales) / i_max_steps;
+
 }
 
 
@@ -402,6 +503,7 @@ void animate(void)
 			movtamales_x += KeyFrame[playIndex].movTamales_xInc;
 			movtamales_z += KeyFrame[playIndex].movTamales_zInc;
 			giroTamales += KeyFrame[playIndex].giroTamalesInc;
+
 			i_curr_steps++;
 		}
 
@@ -560,6 +662,17 @@ int main()
 	Calle = Model();
 	Calle.LoadModel("Models/Calle/calle.obj");
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	//---------------------------Modelo de animacion para hollow K
+	Hollow_K = Model();
+	Hollow_K.LoadModel("Models/hollow/prueba_v4.obj");
+
+	Energia = Model();
+	Energia.LoadModel("Models/hollow/esfera_h.obj");
+
+	//---------------------------Modelo de animacion para hollow K
+
+
 	AssiaticTruck = Model();
 	AssiaticTruck.LoadModel("Models/asian/asian_truck.obj");
 
@@ -784,6 +897,9 @@ int main()
 	start_time = std::chrono::high_resolution_clock::now();
 	//******************************************FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF******************************************/
 	glm::vec3 posblackhawk = glm::vec3(2.0f, 0.0f, 0.0f);  //VARIABLE MAT PARA DECLARA DATOS DE X,Y,Z INICILES PARA EL AVION 
+	
+	//---------------------Animacion Hollow
+	glm::vec3 posEner = glm::vec3(0.0f, 0.0f, 0.0f);//Para poder mover la bola de energia
 	//KEYFRAMES DECLARADOS INICIALES
 
 	// TUX KeyFrames
@@ -903,6 +1019,48 @@ int main()
 	KeyFrame[11].movTamales_x = 20.0f;
 	KeyFrame[11].movTamales_z = -1.0f;
 	KeyFrame[11].giroTamales = -180;
+
+
+	//Frames para hollow K
+	
+	HOLLOWKeyFrame[0].energiat = 0.0f;
+	HOLLOWKeyFrame[0].energyMov = 0.0f;
+
+	HOLLOWKeyFrame[1].energiat = 1.0f;
+	HOLLOWKeyFrame[1].energyMov = 0.0f;
+
+	HOLLOWKeyFrame[2].energiat = 2.0f;
+	HOLLOWKeyFrame[2].energyMov = 0.0f;
+
+	HOLLOWKeyFrame[3].energiat = 3.0f;
+	HOLLOWKeyFrame[3].energyMov = 0.0f;
+
+	HOLLOWKeyFrame[4].energiat = 4.0f;
+	HOLLOWKeyFrame[4].energyMov = 0.0f;
+
+	HOLLOWKeyFrame[5].energiat = 5.0f;
+	HOLLOWKeyFrame[5].energyMov = 0.0f;
+
+	HOLLOWKeyFrame[6].energiat = 6.0f;
+	HOLLOWKeyFrame[6].energyMov = 0.0f;
+
+	HOLLOWKeyFrame[7].energiat = 7.0f;
+	HOLLOWKeyFrame[7].energyMov = 0.0f;
+
+	HOLLOWKeyFrame[8].energiat = 8.0f;
+	HOLLOWKeyFrame[8].energyMov = 0.0f;
+
+	HOLLOWKeyFrame[9].energiat = 9.0f;
+	HOLLOWKeyFrame[9].energyMov = 5.0f;
+
+	HOLLOWKeyFrame[10].energiat = 4.0f;
+	HOLLOWKeyFrame[10].energyMov = 10.0f;
+
+	HOLLOWKeyFrame[11].energiat = 0.0f;
+	HOLLOWKeyFrame[11].energyMov = 50.0f;
+
+	HOLLOWKeyFrame[12].energiat = 0.0f;
+	HOLLOWKeyFrame[12].energyMov = 60.0f;
 
 
 	bool prev_day_state = true;
@@ -1048,8 +1206,11 @@ int main()
 		// para keyframes
 		inputKeyframes(mainWindow.getsKeys());
 		inputTuxKeyframes(mainWindow.getsKeys());
+		inputhollowKeyframes(mainWindow.getsKeys());
+
 		animate();
 		tuxAnimate();
+		hollowAnimate();
 
 
 		// Clear the window
@@ -1263,6 +1424,25 @@ int main()
 		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		Alfombra.RenderModel();
+
+		//--------------------------------------------------------------Hollow para keyframes
+		model = glm::mat4(1.0);
+		//posUFO = glm::vec3(posXUFO + movUFOx, posYUFO + movUFOy, posZUFO + movUFOz);
+		//model = glm::translate(model, posUFO);
+		model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+		//model = glm::rotate(model, giroUFO * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Hollow_K.RenderModel();
+
+
+		//Bola de energia
+		model = glm::mat4(1.0);
+		posEner = glm::vec3(0.0f, 0.0f, posEnergy + movEnergy);
+		model = glm::translate(model, posEner);
+		model = glm::scale(model, glm::vec3(energySize, energySize, energySize));
+		//model = glm::rotate(model, giroUFO * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Energia.RenderModel();
 
 		/*model = glm::mat4(1.0);
 		model = glm::translate(model, glm::vec3(-490.0f, 0.0f, 50.0f));
@@ -1701,6 +1881,40 @@ void inputTuxKeyframes(bool* keys) {
 		if (habilitaranimaciontux < 1)
 		{
 			reproduciranimaciontux = 0;
+		}
+	}
+}
+
+
+void inputhollowKeyframes(bool* keys) {
+	if (keys[GLFW_KEY_SPACE] && keys[GLFW_KEY_6]) // init animation
+	{
+		if (reproduciranimacionHollow < 1)
+		{
+			if (hollowPlay == false && (hollowFrameIndex > 1))
+			{
+				hollowResetElements();
+				//First Interpolation				
+				hollowInterpolation();
+				hollowPlay = true;
+				hollowPlayIndex = 0;
+				i_curr_steps_hollow = 0;
+				reproduciranimacionHollow++;
+				printf("\n presiona 0 + 6 para habilitar reproducir de nuevo la animación'\n");
+				habilitaranimacionHollow = 0;
+
+			}
+			else
+			{
+				hollowPlay = false;
+			}
+		}
+	}
+	if (keys[GLFW_KEY_0])  // reset animation
+	{
+		if (habilitaranimacionHollow < 1)
+		{
+			reproduciranimacionHollow = 0;
 		}
 	}
 }
