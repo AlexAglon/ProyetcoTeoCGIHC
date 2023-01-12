@@ -25,6 +25,7 @@ Animación:
 
 // Models
 #include "Tux_M.h"
+#include "TuxFather.h"
 
 //para probar el importer
 //#include<assimp/Importer.hpp>
@@ -60,6 +61,7 @@ float toffsetu = 0.0f;
 float toffsetv = 0.0f;
 //float reproduciranimacion, habilitaranimacion, guardoFrame, reinicioFrame, ciclo, ciclo2, contador = 0;
 float reproduciranimacion, habilitaranimacion,guardoFrame, reinicioFrame, ciclo, ciclo2, contador = 0;
+float reproduciranimaciontux, habilitaranimaciontux;
 
 Window mainWindow;
 Camera camera;
@@ -131,6 +133,11 @@ Model tamales;
 Model Stage_M;
 Model StageLight_M;  // Reused 3 times 
 
+// TuxFather
+Model Desk_M;
+Model MonitoOn_M;
+Model MonitorOff_M;
+
 Skybox skybox;
 std::vector<std::string> skyboxDayFaces, skyboxNightFaces;
 
@@ -159,7 +166,7 @@ static const char* fShader = "shaders/shader_light.frag";
 
 //PARA INPUT CON KEYFRAMES 
 void inputKeyframes(bool* keys);
-
+void inputTuxKeyframes(bool* keys);
 
 void CreateObjects()
 {
@@ -223,17 +230,100 @@ void CreateShaders()
 
 
 ///////////////////////////////KEYFRAMES/////////////////////
+#define MAX_FRAMES 30
+// Tux KeyFrames
+bool animacionTux = false;
+glm::vec3 tuxFatherPos = glm::vec3(-415.0f, 1.0f, 80.0f);
+glm::vec3 tuxFatherMov = tuxFatherPos;
+float giroTuxFather = 180.0f;
+int i_max_steps_tux = 90;
+int i_curr_steps_tux = 0;
+typedef struct _tuxframe
+{
+	//Variables para GUARDAR Key Frames
+	float movTux_x;		//Variable para PosicionX
+	float movTux_z;		//Variable para PosicionY
+	float movTux_xInc;		//Variable para IncrementoX
+	float movTux_zInc;		//Variable para IncrementoY
+	float giroTux;
+	float giroTuxInc;
+} TUX_FRAME;
+
+TUX_FRAME TuxKeyFrame[MAX_FRAMES];
+int TuxFrameIndex = 4;			//introducir datos
+bool tuxPlay = false;
+int tuxPlayIndex = 0;
+
+void saveTuxFrame(void)
+{
+
+	printf("frameindex %d\n", TuxFrameIndex);
+	TuxKeyFrame[TuxFrameIndex].movTux_x = tuxFatherMov.x;
+	TuxKeyFrame[TuxFrameIndex].movTux_z = tuxFatherMov.z;
+	TuxKeyFrame[TuxFrameIndex].giroTux = giroTuxFather;
+
+	TuxFrameIndex++;
+}
+
+void tuxResetElements(void)
+{
+	tuxFatherMov.x = TuxKeyFrame[0].movTux_x;
+	tuxFatherMov.z = TuxKeyFrame[0].movTux_z;
+	giroTuxFather = TuxKeyFrame[0].giroTux;
+}
+
+void tuxInterpolation(void)
+{
+	TuxKeyFrame[tuxPlayIndex].movTux_xInc = (TuxKeyFrame[tuxPlayIndex + 1].movTux_x - TuxKeyFrame[tuxPlayIndex].movTux_x) / i_max_steps_tux;
+	TuxKeyFrame[tuxPlayIndex].movTux_zInc = (TuxKeyFrame[tuxPlayIndex + 1].movTux_z - TuxKeyFrame[tuxPlayIndex].movTux_z) / i_max_steps_tux;
+	TuxKeyFrame[tuxPlayIndex].giroTuxInc = (TuxKeyFrame[tuxPlayIndex + 1].giroTux - TuxKeyFrame[tuxPlayIndex].giroTux) / i_max_steps_tux;
+}
+
+void tuxAnimate(void)
+{
+	//Movimiento del objeto
+	if (tuxPlay)
+	{
+		if (i_curr_steps_tux >= i_max_steps_tux) //end of animation between frames?
+		{
+			tuxPlayIndex++;
+			printf("playindex : %d\n", tuxPlayIndex);
+			if (tuxPlayIndex > TuxFrameIndex - 2)	//end of total animation?
+			{
+				printf("Frame index= %d\n", TuxFrameIndex);
+				printf("termina anim\n");
+				tuxPlayIndex = 0;
+				tuxPlay = false;
+			}
+			else //Next frame interpolations
+			{
+				//printf("entro aquí\n");
+				i_curr_steps_tux = 0; //Reset counter
+				//Interpolation
+				tuxInterpolation();
+			}
+		}
+		else
+		{
+			//printf("se quedó aqui\n");
+			//printf("max steps: %f", i_max_steps);
+			//Draw animation
+			tuxFatherMov.x += TuxKeyFrame[tuxPlayIndex].movTux_xInc;
+			tuxFatherMov.z += TuxKeyFrame[tuxPlayIndex].movTux_zInc;
+			giroTuxFather += TuxKeyFrame[tuxPlayIndex].giroTuxInc;
+			i_curr_steps_tux++;
+		}
+
+	}
+}
 
 
+// Puesto KeyFrames
 bool animacion = false;
-
-
-//NEW// Keyframes
 float posXtamales = 100.0, posYtamales = 0.0, posZtamales = -350.0;
-float	movtamales_x = 0.0f, movtamales_z = 0.0f;
+float movtamales_x = 0.0f, movtamales_z = 0.0f;
 float giroTamales = 0;
 
-#define MAX_FRAMES 30
 int i_max_steps = 90;
 int i_curr_steps = 14;
 typedef struct _frame
@@ -257,7 +347,6 @@ void saveFrame(void)
 
 	printf("frameindex %d\n", FrameIndex);
 
-
 	KeyFrame[FrameIndex].movTamales_x = movtamales_x;
 	KeyFrame[FrameIndex].movTamales_z = movtamales_z;
 	KeyFrame[FrameIndex].giroTamales = giroTamales;
@@ -278,7 +367,6 @@ void interpolation(void)
 	KeyFrame[playIndex].movTamales_xInc = (KeyFrame[playIndex + 1].movTamales_x - KeyFrame[playIndex].movTamales_x) / i_max_steps;
 	KeyFrame[playIndex].movTamales_zInc = (KeyFrame[playIndex + 1].movTamales_z - KeyFrame[playIndex].movTamales_z) / i_max_steps;
 	KeyFrame[playIndex].giroTamalesInc = (KeyFrame[playIndex + 1].giroTamales - KeyFrame[playIndex].giroTamales) / i_max_steps;
-
 }
 
 
@@ -385,8 +473,6 @@ int main()
 	signDescuentoTexture.LoadTextureA();
 
 
-
-
 	//--------------------------------------------------Cargando Modelos----------------------------------------------------------------------------
 
 	//////////////////////////////////////////////////////CASA PHINEAS/////////////////////////////////////////////////////
@@ -396,16 +482,16 @@ int main()
 	Piso= Model();
 	Piso.LoadModel("Models/Piso/piso.obj");
 
-	Ventanas = Model();
-	Ventanas.LoadModel("Models/Ventanas/ventanas.obj");
+	//Ventanas = Model();
+	//Ventanas.LoadModel("Models/Ventanas/ventanas.obj");
 
-	Vidrios = Model();
-	Vidrios.LoadModel("Models/Vidrios/vidrios.obj");
+	//Vidrios = Model();
+	//Vidrios.LoadModel("Models/Vidrios/vidrios.obj");
 	
 	Alfombra = Model();
 	Alfombra.LoadModel("Models/Alfombra/alfombra.obj");
 	
-	Lampara = Model();
+	/*Lampara = Model();
 	Lampara.LoadModel("Models/Lampara/lamp.obj");
 
 	BaseLamapara = Model();
@@ -436,8 +522,8 @@ int main()
 	BaseVentilador.LoadModel("Models/Ventilador/base.obj");
 
 	Ventilador = Model();
-	Ventilador.LoadModel("Models/Ventilador/ventilador.obj");
-
+	Ventilador.LoadModel("Models/Ventilador/ventilador.obj");*/
+	/*
 	Calendar = Model();
 	Calendar.LoadModel("Models/Calendario/calendar.obj");
 
@@ -469,7 +555,7 @@ int main()
 	BrazoD.LoadModel("Models/BrazoDer/brazoder.obj");
 
 	BrazoI = Model();
-	BrazoI.LoadModel("Models/BrazoIzq/brazoizq.obj");
+	BrazoI.LoadModel("Models/BrazoIzq/brazoizq.obj");*/
 
 	Calle = Model();
 	Calle.LoadModel("Models/Calle/calle.obj");
@@ -525,8 +611,24 @@ int main()
 	tamales = Model();
 	tamales.LoadModel("Models/carrito/carrito.obj");
 
+	Desk_M = Model();
+	Desk_M.LoadModel("Models/desk/desk.obj");
+	MonitoOn_M = Model();
+	MonitoOn_M.LoadModel("Models/desk/monitor_on.obj");
+	MonitorOff_M = Model();
+	MonitorOff_M.LoadModel("Models/desk/monitor_off.obj");
+
 	Tux_M tux = Tux_M(
 		glm::vec3(0.0f),
+		"Models/tux_v2/Cuerpo.obj",
+		"Models/tux_v2/brazo_i.obj",
+		"Models/tux_v2/brazo_d.obj",
+		"Models/tux_v2/pie_i.obj",
+		"Models/tux_v2/pie_d.obj"
+	);
+
+	TuxFather_M tuxFather = TuxFather_M(
+		glm::vec3(-415.0f, 1.0f, 80.0f),
 		"Models/tux_v2/Cuerpo.obj",
 		"Models/tux_v2/brazo_i.obj",
 		"Models/tux_v2/brazo_d.obj",
@@ -684,6 +786,76 @@ int main()
 	glm::vec3 posblackhawk = glm::vec3(2.0f, 0.0f, 0.0f);  //VARIABLE MAT PARA DECLARA DATOS DE X,Y,Z INICILES PARA EL AVION 
 	//KEYFRAMES DECLARADOS INICIALES
 
+	// TUX KeyFrames
+	TuxKeyFrame[0].movTux_x = -415.0f;
+	TuxKeyFrame[0].movTux_z = 80.0f;
+	TuxKeyFrame[0].giroTux = 180.0f;
+
+	TuxKeyFrame[1].movTux_x = -415.0f;
+	TuxKeyFrame[1].movTux_z = 63.0f;
+	TuxKeyFrame[1].giroTux = 180.0f;
+
+	TuxKeyFrame[2].movTux_x = -415.0f;
+	TuxKeyFrame[2].movTux_z = 56.0f;
+	TuxKeyFrame[2].giroTux = 180.0f;
+
+	TuxFrameIndex++;
+	TuxKeyFrame[3].movTux_x = -415.0f;
+	TuxKeyFrame[3].movTux_z = 50.0f;
+	TuxKeyFrame[3].giroTux = 180.0f;
+
+	TuxFrameIndex++;
+	TuxKeyFrame[4].movTux_x = -415.0f;
+	TuxKeyFrame[4].movTux_z = 45.0f;
+	TuxKeyFrame[4].giroTux = 240.0f;
+
+	TuxFrameIndex++;
+	TuxKeyFrame[5].movTux_x = -430.0f;
+	TuxKeyFrame[5].movTux_z = 45.0f;
+	TuxKeyFrame[5].giroTux = 240.0f;
+
+	TuxFrameIndex++;
+	TuxKeyFrame[6].movTux_x = -430.0f;
+	TuxKeyFrame[6].movTux_z = 45.0f;
+	TuxKeyFrame[6].giroTux = 270.0f;
+
+	TuxFrameIndex++;
+	TuxKeyFrame[7].movTux_x = -445.0f;
+	TuxKeyFrame[7].movTux_z = 45.0f;
+	TuxKeyFrame[7].giroTux = 270.0f;
+
+	TuxFrameIndex++;
+	TuxKeyFrame[8].movTux_x = -460.0f;
+	TuxKeyFrame[8].movTux_z = 45.0f;
+	TuxKeyFrame[8].giroTux = 270.0f;
+
+	TuxFrameIndex++;
+	TuxKeyFrame[9].movTux_x = -460.0f;
+	TuxKeyFrame[9].movTux_z = 45.0f;
+	TuxKeyFrame[9].giroTux = 303.1f;
+
+	TuxFrameIndex++;
+	TuxKeyFrame[10].movTux_x = -460.0f;
+	TuxKeyFrame[10].movTux_z = 45.0f;
+	TuxKeyFrame[10].giroTux = 360.0f;
+
+	TuxFrameIndex++;
+	TuxKeyFrame[11].movTux_x = -460.0f;
+	TuxKeyFrame[11].movTux_z = 53.0f;
+	TuxKeyFrame[11].giroTux = 360.0f;
+
+	TuxFrameIndex++;
+	TuxKeyFrame[12].movTux_x = -460.0f;
+	TuxKeyFrame[12].movTux_z = 56.0f;
+	TuxKeyFrame[12].giroTux = 360.0f;
+
+	//TuxFrameIndex++;
+	TuxKeyFrame[13].movTux_x = -460.0f;
+	TuxKeyFrame[13].movTux_z = 62.0f;
+	TuxKeyFrame[13].giroTux = 360.0f;
+
+
+
 	KeyFrame[0].movTamales_x = -10.0f;
 	KeyFrame[0].movTamales_z = 0.0f;
 	KeyFrame[0].giroTamales = 90;
@@ -741,7 +913,7 @@ int main()
 	glm::vec3 l1, l2, l3;
 
 
-	////Loop mientras no se cierra la ventana
+	//Loop mientras no se cierra la ventana
 	while (!mainWindow.getShouldClose())
 	{
 		GLfloat now = glfwGetTime();
@@ -789,8 +961,6 @@ int main()
 			for (auto& light : pointLights) {
 				light.setIntensity(0.0f);
 			}
-
-			
 		}
 		else {
 			sunLight.setAmbientIntenssity(0.35f);
@@ -812,7 +982,6 @@ int main()
 		glfwPollEvents();
 		keys = mainWindow.getsKeys();
 		
-		// TODO: Revisar el modo de camara activo (3rd person or isometric)
 		if (mainWindow.getCameraMode()) {
 			// 3rd Person Mode
 			tux.keyControl(mainWindow.getsKeys(), deltaTime);
@@ -877,8 +1046,10 @@ int main()
 		}
 
 		// para keyframes
-		//inputKeyframes(mainWindow.getsKeys());
-		//animate();
+		inputKeyframes(mainWindow.getsKeys());
+		inputTuxKeyframes(mainWindow.getsKeys());
+		animate();
+		tuxAnimate();
 
 
 		// Clear the window
@@ -1027,56 +1198,56 @@ int main()
 		*/
 
 		//----------------------------------------------------------Areas de comida------------------------------------------------------------------
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(120.0f,1.0f,210.0f));
-		//model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//AssiaticTruck.RenderModel();
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(120.0f,1.0f,210.0f));
+		model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		AssiaticTruck.RenderModel();
 
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(120.0f, 1.0f, 70.0f));
-		//model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//AmericanTruck.RenderModel();
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(120.0f, 1.0f, 70.0f));
+		model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		AmericanTruck.RenderModel();
 
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(120.0f, 1.0f, -70.0f));
-		//model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//ItalianTruck.RenderModel();
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(120.0f, 1.0f, -70.0f));
+		model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		ItalianTruck.RenderModel();
 
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(120.0f, 1.0f, -220.0f));
-		//model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//ArabicTruck.RenderModel();
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(120.0f, 1.0f, -220.0f));
+		model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		ArabicTruck.RenderModel();
 
-		////----------------------------------------------------------Areas de comida------------------------------------------------------------------
+		//----------------------------------------------------------Areas de comida------------------------------------------------------------------
 
-		////Puesto de tortas
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(-130.0f, -0.5f, 150.0f));
-		//model = glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f));
-		//model = glm::rotate(model, 90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//tortas.RenderModel();
+		//Puesto de tortas
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-130.0f, -0.5f, 150.0f));
+		model = glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f));
+		model = glm::rotate(model, 90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		tortas.RenderModel();
 
-		////Puesto de tacos 
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(-130.0f, 0.0f, 50.0f));
-		//model = glm::scale(model, glm::vec3(10.0f, 10.0f, 5.0f));
-		//model = glm::rotate(model, 270 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//tacos.RenderModel();
+		//Puesto de tacos 
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-130.0f, 0.0f, 50.0f));
+		model = glm::scale(model, glm::vec3(10.0f, 10.0f, 5.0f));
+		model = glm::rotate(model, 270 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		tacos.RenderModel();
 
 		//////////////////////////////////////////////CASA PHINEAS///////////////////////////////////////////
-		/*model = glm::mat4(1.0);
+		model = glm::mat4(1.0);
 		model = glm::translate(model, glm::vec3(-490.0f, 0.0f, 50.0f));
 		model = glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f));
 		model = glm::rotate(model, 90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -1084,6 +1255,7 @@ int main()
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		Casa.RenderModel();
 
+		
 		model = glm::mat4(1.0);
 		model = glm::translate(model, glm::vec3(-490.0f, 0.0f, 50.0f));
 		model = glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f));
@@ -1092,7 +1264,7 @@ int main()
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		Alfombra.RenderModel();
 
-		model = glm::mat4(1.0);
+		/*model = glm::mat4(1.0);
 		model = glm::translate(model, glm::vec3(-490.0f, 0.0f, 50.0f));
 		model = glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f));
 		model = glm::rotate(model, 90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -1155,14 +1327,14 @@ int main()
 		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		Ventanas.RenderModel();*/
-
-		model = glm::mat4(1.0);
-		model = glm::translate(model, glm::vec3(-490.0f, 0.0f, 50.0f));
-		model = glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f));
-		model = glm::rotate(model, 90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
-		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		BaseVentilador.RenderModel();
+		
+		//model = glm::mat4(1.0);
+		//model = glm::translate(model, glm::vec3(-490.0f, 0.0f, 50.0f));
+		//model = glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f));
+		//model = glm::rotate(model, 90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		//BaseVentilador.RenderModel();
 
 		//model = glm::mat4(1.0);
 		//model = glm::translate(model, glm::vec3(-490.0f, 0.0f, 50.0f));
@@ -1228,221 +1400,237 @@ int main()
 		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		//Ser.RenderModel();
 
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(-270.0f, 0.0f, 40.0f));
-		//model = glm::scale(model, glm::vec3(25.0f, 10.0f, 50.0f));
-		//model = glm::rotate(model, 90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//Calle.RenderModel();
-
 		model = glm::mat4(1.0);
-		model = glm::translate(model, glm::vec3(-490.500f, 3.5f, 47.722f));
-		model = glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f));
-		model = glm::rotate(model, rot * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::translate(model, glm::vec3(-270.0f, 0.0f, 40.0f));
+		model = glm::scale(model, glm::vec3(25.0f, 10.0f, 50.0f));
+		model = glm::rotate(model, 90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
 		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		Ventilador.RenderModel();
+		Calle.RenderModel();
+
+		//model = glm::mat4(1.0);
+		//model = glm::translate(model, glm::vec3(-490.500f, 3.5f, 47.722f));
+		//model = glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f));
+		//model = glm::rotate(model, rot * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		//Ventilador.RenderModel();
 
 
 
 		///////////////////////////////////////////////////////////////////////////////////////////////
 
-		////Puesto de aguas
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(-130.0f, 0.0f, -130.0f));
-		//model = glm::scale(model, glm::vec3(2.5f, 5.0f, 5.0f));
-		//model = glm::rotate(model, 90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//puesto_aguas.RenderModel();
+		//Puesto de aguas
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-130.0f, 0.0f, -130.0f));
+		model = glm::scale(model, glm::vec3(2.5f, 5.0f, 5.0f));
+		model = glm::rotate(model, 90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		puesto_aguas.RenderModel();
 
-		////Puesto de garnachas
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(-130.0f, 0.0f, -250.0f));
-		//model = glm::scale(model, glm::vec3(5.0f, 10.0f, 5.0f));
-		//model = glm::rotate(model, -90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//puesto_garnachas.RenderModel();
+		//Puesto de garnachas
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-130.0f, 0.0f, -250.0f));
+		model = glm::scale(model, glm::vec3(5.0f, 10.0f, 5.0f));
+		model = glm::rotate(model, -90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		puesto_garnachas.RenderModel();
 
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(40.0f, 0.0f, 100.0f));
-		//model = glm::scale(model, glm::vec3(10.0f, 12.0f, 10.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//mesa.RenderModel();
-
-
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(-40.0f, 0.0f, 100.0f));
-		//model = glm::scale(model, glm::vec3(10.0f, 12.0f, 10.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//mesa.RenderModel();
-
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(40.0f, 0.0f, 20.0f));
-		//model = glm::scale(model, glm::vec3(10.0f, 12.0f, 10.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//mesa.RenderModel();
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(40.0f, 0.0f, 100.0f));
+		model = glm::scale(model, glm::vec3(10.0f, 12.0f, 10.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		mesa.RenderModel();
 
 
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(-40.0f, 0.0f, 20.0f));
-		//model = glm::scale(model, glm::vec3(10.0f, 12.0f, 10.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//mesa.RenderModel();
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-40.0f, 0.0f, 100.0f));
+		model = glm::scale(model, glm::vec3(10.0f, 12.0f, 10.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		mesa.RenderModel();
+
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(40.0f, 0.0f, 20.0f));
+		model = glm::scale(model, glm::vec3(10.0f, 12.0f, 10.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		mesa.RenderModel();
 
 
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(40.0f, 0.0f, -60.0f));
-		//model = glm::scale(model, glm::vec3(10.0f, 12.0f, 10.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//mesa.RenderModel();
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-40.0f, 0.0f, 20.0f));
+		model = glm::scale(model, glm::vec3(10.0f, 12.0f, 10.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		mesa.RenderModel();
 
 
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(-40.0f, 0.0f, -60.0f));
-		//model = glm::scale(model, glm::vec3(10.0f, 12.0f, 10.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//mesa.RenderModel();
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(40.0f, 0.0f, -60.0f));
+		model = glm::scale(model, glm::vec3(10.0f, 12.0f, 10.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		mesa.RenderModel();
 
 
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(40.0f, 0.0f, -140.0f));
-		//model = glm::scale(model, glm::vec3(10.0f, 12.0f, 10.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//mesa.RenderModel();
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-40.0f, 0.0f, -60.0f));
+		model = glm::scale(model, glm::vec3(10.0f, 12.0f, 10.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		mesa.RenderModel();
 
 
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(-40.0f, 0.0f, -140.0f));
-		//model = glm::scale(model, glm::vec3(10.0f, 12.0f, 10.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//mesa.RenderModel();
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(40.0f, 0.0f, -140.0f));
+		model = glm::scale(model, glm::vec3(10.0f, 12.0f, 10.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		mesa.RenderModel();
+
+
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-40.0f, 0.0f, -140.0f));
+		model = glm::scale(model, glm::vec3(10.0f, 12.0f, 10.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		mesa.RenderModel();
 
 
 
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(-100.0f, 0.0f, -370.0f));
-		//model = glm::scale(model, glm::vec3(10.0f, 12.0f, 10.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//banio.RenderModel();
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-100.0f, 0.0f, -370.0f));
+		model = glm::scale(model, glm::vec3(10.0f, 12.0f, 10.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		banio.RenderModel();
 
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(-50.0f, 0.0f, -370.0f));
-		//model = glm::scale(model, glm::vec3(10.0f, 12.0f, 10.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//banio.RenderModel();
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-50.0f, 0.0f, -370.0f));
+		model = glm::scale(model, glm::vec3(10.0f, 12.0f, 10.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		banio.RenderModel();
 
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(0.0f, 0.0f, -370.0f));
-		//model = glm::scale(model, glm::vec3(10.0f, 12.0f, 10.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//banio.RenderModel();
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(0.0f, 0.0f, -370.0f));
+		model = glm::scale(model, glm::vec3(10.0f, 12.0f, 10.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		banio.RenderModel();
 
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(25.0f, 10.0f, -400.0f));
-		//model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//botes.RenderModel();
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(25.0f, 10.0f, -400.0f));
+		model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		botes.RenderModel();
 
-		//model = glm::mat4(1.0);
-		//posblackhawk = glm::vec3(posXtamales + movtamales_x, posYtamales , posZtamales + movtamales_z); //POS INICIAL+VALOR DE LA ANIMACION
-		//model = glm::translate(model, posblackhawk);
-		//model = glm::scale(model, glm::vec3(6.0f, 10.0f, 8.0f));
-		//model = glm::rotate(model, giroTamales * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//tamales.RenderModel();
+		model = glm::mat4(1.0);
+		posblackhawk = glm::vec3(posXtamales + movtamales_x, posYtamales , posZtamales + movtamales_z); //POS INICIAL+VALOR DE LA ANIMACION
+		model = glm::translate(model, posblackhawk);
+		model = glm::scale(model, glm::vec3(6.0f, 10.0f, 8.0f));
+		model = glm::rotate(model, giroTamales * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		tamales.RenderModel();
 
 
 		//-----------------------------------------------------------------------Modelos de laparas----------------------
 		//Lado de food trucks
 		//Entre sushi y hot dog 
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(150.0f, 0.0f, 140.0f));
-		//model = glm::scale(model, glm::vec3(5.0f, 5.0f, 5.0f));
-		//model = glm::rotate(model, -90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//lampara.RenderModel();
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(150.0f, 0.0f, 140.0f));
+		model = glm::scale(model, glm::vec3(5.0f, 5.0f, 5.0f));
+		model = glm::rotate(model, -90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		lampara.RenderModel();
 
-		////Entre hot dog e italiana 
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(150.0f, 0.0f, 0.0f));
-		//model = glm::scale(model, glm::vec3(5.0f, 5.0f, 5.0f));
-		//model = glm::rotate(model, -90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//lampara.RenderModel();
+		//Entre hot dog e italiana 
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(150.0f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(5.0f, 5.0f, 5.0f));
+		model = glm::rotate(model, -90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		lampara.RenderModel();
 
-		////Entre italiana y arabe
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(150.0f, 0.0f, -150.0f));
-		//model = glm::scale(model, glm::vec3(5.0f, 5.0f, 5.0f));
-		//model = glm::rotate(model, -90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//lampara.RenderModel();
+		//Entre italiana y arabe
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(150.0f, 0.0f, -150.0f));
+		model = glm::scale(model, glm::vec3(5.0f, 5.0f, 5.0f));
+		model = glm::rotate(model, -90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		lampara.RenderModel();
 
-		////Lado de comida mexicana 
-		////Entre tortas y tacos 
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(-130.0f, 0.0f, 80.0f));
-		//model = glm::scale(model, glm::vec3(5.0f, 5.0f, 5.0f));
-		//model = glm::rotate(model, 90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//lampara.RenderModel();
+		//Lado de comida mexicana 
+		//Entre tortas y tacos 
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-130.0f, 0.0f, 80.0f));
+		model = glm::scale(model, glm::vec3(5.0f, 5.0f, 5.0f));
+		model = glm::rotate(model, 90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		lampara.RenderModel();
 
-		////Entre tacos y aguas 
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(-130.0f, 0.0f, -60.0f));
-		//model = glm::scale(model, glm::vec3(5.0f, 5.0f, 5.0f));
-		//model = glm::rotate(model, 90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//lampara.RenderModel();
+		//Entre tacos y aguas 
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-130.0f, 0.0f, -60.0f));
+		model = glm::scale(model, glm::vec3(5.0f, 5.0f, 5.0f));
+		model = glm::rotate(model, 90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		lampara.RenderModel();
 
-		////Entre púesto de aguas y garnchas
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(-130.0f, 0.0f, -200.0f));
-		//model = glm::scale(model, glm::vec3(5.0f, 5.0f, 5.0f));
-		//model = glm::rotate(model, 90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//lampara.RenderModel();
+		//Entre púesto de aguas y garnchas
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-130.0f, 0.0f, -200.0f));
+		model = glm::scale(model, glm::vec3(5.0f, 5.0f, 5.0f));
+		model = glm::rotate(model, 90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		lampara.RenderModel();
 
-		////-------------------------------------PARA CARTELES
-		////Entre púesto de aguas y garnchas
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(-100.0f, 0.0f, -180.0f));
-		//model = glm::scale(model, glm::vec3(4.0f, 4.0f, 4.0f));
-		//model = glm::rotate(model, 90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//cartel.RenderModel();
+		// TUX FATHER - A normal linux user
+		// Desk
+		float x_desk = -460.0f, z_desk = 80.0f;
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(x_desk, 0.0f, z_desk));
+		model = glm::rotate(model, 90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(2.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Desk_M.RenderModel();
+		MonitorOff_M.RenderModel();
+		// MonitoOn_M.RenderModel();
+		tuxFather.move(uniformModel, tuxFatherMov, giroTuxFather);
+		
 
-		////Entre foodtrucks
-		//model = glm::mat4(1.0);
-		//model = glm::translate(model, glm::vec3(100.0f, 0.0f, 0.0f));
-		//model = glm::scale(model, glm::vec3(4.0f, 4.0f, 4.0f));
-		//model = glm::rotate(model, -90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
-		//Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
-		//glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		//cartel.RenderModel();
+
+		//-------------------------------------PARA CARTELES
+		//Entre púesto de aguas y garnchas
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-100.0f, 0.0f, -180.0f));
+		model = glm::scale(model, glm::vec3(4.0f, 4.0f, 4.0f));
+		model = glm::rotate(model, 90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		cartel.RenderModel();
+
+		//Entre foodtrucks
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(100.0f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(4.0f, 4.0f, 4.0f));
+		model = glm::rotate(model, -90 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		cartel.RenderModel();
 
 		tux.move(uniformModel);
 
@@ -1484,9 +1672,42 @@ int main()
 	return 0;
 }
 
+void inputTuxKeyframes(bool* keys) {
+	if (keys[GLFW_KEY_SPACE] && keys[GLFW_KEY_2]) // init animation
+	{
+		if (reproduciranimaciontux < 1)
+		{
+			if (tuxPlay == false && (TuxFrameIndex > 1))
+			{
+				tuxResetElements();
+				//First Interpolation				
+				tuxInterpolation();
+				tuxPlay = true;
+				tuxPlayIndex = 0;
+				i_curr_steps_tux = 0;
+				reproduciranimaciontux++;
+				printf("\n presiona 0 para habilitar reproducir de nuevo la animación'\n");
+				habilitaranimaciontux = 0;
+
+			}
+			else
+			{
+				tuxPlay = false;
+			}
+		}
+	}
+	if (keys[GLFW_KEY_0] && keys[GLFW_KEY_2])  // reset animation
+	{
+		if (habilitaranimaciontux < 1)
+		{
+			reproduciranimaciontux = 0;
+		}
+	}
+}
+
 void inputKeyframes(bool* keys)
 {
-	if (keys[GLFW_KEY_SPACE])
+	if (keys[GLFW_KEY_SPACE] && keys[GLFW_KEY_1])
 	{
 		if (reproduciranimacion < 1)
 		{
@@ -1509,7 +1730,7 @@ void inputKeyframes(bool* keys)
 			}
 		}
 	}
-	if (keys[GLFW_KEY_0])
+	if (keys[GLFW_KEY_0] && keys[GLFW_KEY_1])
 	{
 		if (habilitaranimacion < 1)
 		{
@@ -1522,7 +1743,7 @@ void inputKeyframes(bool* keys)
 		if (guardoFrame < 1)
 		{
 			saveFrame();
-			printf("movAvion_x es: %f\n", movtamales_x);
+			//printf("movAvion_x es: %f\n", movtamales_x);
 			//printf("movAvion_y es: %f\n", movAvion_y);
 			printf(" \npresiona P para habilitar guardar otro frame'\n");
 			guardoFrame++;
